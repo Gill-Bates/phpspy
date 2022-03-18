@@ -1,10 +1,8 @@
 <?php
 header('Content-Type: text/html; charset=utf-8');
-
-require('../inc/inc_func.php');
-require('../inc/inc_config.php');
-
 session_start();
+require('../admin/config.php');
+
 echo isset($_SESSION['login']);
 if (isset($_SESSION['login'])) {
     header('LOCATION:./admin.php');

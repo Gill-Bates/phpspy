@@ -1,19 +1,21 @@
 <?php
     session_start();
     header('Content-Type: text/html; charset=utf-8');
-    require('../inc/inc_func.php');
-    require('../inc/inc_config.php');
+    require('./admin/config.php');
 
     if(!isset($_SESSION['login'])) {
         header('LOCATION:./index.php'); die();
     }
 
     // CONNECT TO DB
-    $db = connectSQLite3($dbPath, $tableName);
-
-    // Build URL
-    $finalUrl        = $Url . '?access=' . generateRandomString($Url, $UrlCodeLength);
+    connectSQLite3($dbPath, $tableName);
     
+    // Build URL
+    $UrlId = "image" . generateRandomString($UrlCodeLength) .  ".png";
+    $accessUrl = $Url . "?file=" . $UrlId;
+
+    // Store URl in Databaser
+    storeUrlRecord($dbPath, $UrlId, $tableName);
 ?>
 
 <!DOCTYPE html>
@@ -43,9 +45,9 @@
         <tr>
             <td>
                 <h1 class="text-center">Welcome, Admin!</h1>
-                Your unique Link to share:
+                Your unique Link to the Fake-Image to share:
                 <br />
-                <input type="text" value="<?php echo "$finalUrl"; ?>" class="url">            
+                <input type="text" value="<?php echo "$accessUrl"; ?>" class="url">            
             </td>
         </tr>
     </table>
@@ -55,9 +57,6 @@
 </html>
 
 <?php
-// DESTROY PDO-OBJECT
-$db = null;
-
 exit();
 // END OF SCRIPT
 ?>

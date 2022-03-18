@@ -1,4 +1,5 @@
 <?php
+    require("__DIR__ . ./admin/config.php");
 
 // GENERATE VERSION NUMBER
 function showVersion($versionNumber)
@@ -7,7 +8,7 @@ function showVersion($versionNumber)
 }
 
 // GENERATE RANDOM STRING
-function generateRandomString($Url, $UrlCodeLength)
+function generateRandomString($UrlCodeLength)
 {
     $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     $charactersLength = strlen($characters);
@@ -21,12 +22,13 @@ function generateRandomString($Url, $UrlCodeLength)
 // DATABASE CONNECTION
 function connectSQLite3($dbPath, $tableName)
 {
-    if (!file_exists($dbPath)) {
-        $conn = new SQLite3($dbPath);
+    try {
+        $conn = new PDO("sqlite:" . $dbPath);
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    } catch (Exception $e) {
+        echo "Can't create Database! Check your permissions and try again!",  $e->getMessage(), "\n";
+        die;
     }
-
-    $conn = new PDO("sqlite:" . $dbPath);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $query = "CREATE TABLE IF NOT EXISTS $tableName (
         Id INTEGER,
@@ -44,6 +46,26 @@ function connectSQLite3($dbPath, $tableName)
         PRIMARY KEY('Id' AUTOINCREMENT)
         )";
     $conn->exec($query);
+    $conn = null; // Destroy PDO-Session
+}
+
+// RECORD CHECK
+function checkForRecord($dbPath, $file)
+{
+    $conn = new PDO("sqlite:" . "./admin/$dbPath");
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $query = $conn->query("SELECT UrlId FROM PHPspy WHERE UrlId LIKE '$file';");
+    $max_row = $query->fetch(PDO::FETCH_ASSOC);
+    return $max_row;
+}
+
+// CREATE RECORD
+function storeUrlRecord($dbPath, $accessUrl, $tableName) {
+
+    $conn = new PDO("sqlite:" . $dbPath);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $stmt = $conn->prepare("INSERT INTO $tableName (UrlId) VALUES('$accessUrl');");
+    $stmt->execute();
 }
 
 // GET IP ADDRESS OF CLIENT
